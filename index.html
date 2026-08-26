@@ -281,16 +281,8 @@
       <p class="eyebrow">Admin only — do this once, before hosting</p>
       <h1 class="title" style="font-size:22px;">Set up shared storage</h1>
       <p class="sub">This creates a free, private storage bucket for the live leaderboard. Do this once, then tell Claude the Bucket ID it gives you so it can be built into the final file — nobody else needs to touch this screen.</p>
-      <div id="setupStep1">
-        <input type="text" id="setupEmail" placeholder="your email (for account recovery)">
-        <div style="height:12px;"></div>
-        <button class="btn amber" onclick="createBucket()">Create storage bucket</button>
-        <p class="err" id="setupErr">Something went wrong. Check your connection and try again.</p>
-      </div>
-      <div id="setupStep2" style="display:none; margin-top:16px;">
-        <p class="sub" style="margin-bottom:6px;">Your Bucket ID (copy this to Claude):</p>
-        <div style="font-family:'Special Elite', monospace; font-size:18px; background: rgba(255,255,255,0.5); border:1px dashed var(--ink-soft); padding:12px; text-align:center; word-break:break-all;" id="bucketIdDisplay"></div>
-      </div>
+      <p class="sub">Shared storage is connected to Firebase. Nothing to do here unless you're changing the backend.</p>
+      <div style="font-family:'Special Elite', monospace; font-size:13px; background: rgba(255,255,255,0.5); border:1px dashed var(--ink-soft); padding:12px; text-align:center; word-break:break-all;">https://museum-confidential-default-rtdb.asia-southeast1.firebasedatabase.app</div>
       <div style="height:16px;"></div>
       <button class="btn ghost" onclick="goTo('title')">Back</button>
     </div>
@@ -436,33 +428,14 @@ document.getElementById('lbLink').addEventListener('click', function(e){ e.preve
 document.getElementById('lbBack').addEventListener('click', function(e){ e.preventDefault(); goTo('title'); });
 document.getElementById('setupLink').addEventListener('click', function(e){ e.preventDefault(); goTo('setup'); });
 
-const KVDB_BUCKET_ID = "BNMK5yFd3szLQ7brCorL4v";
-
-async function createBucket(){
-  const email = document.getElementById('setupEmail').value.trim();
-  const errEl = document.getElementById('setupErr');
-  errEl.classList.remove('show');
-  try{
-    const res = await fetch('https://kvdb.io/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'email=' + encodeURIComponent(email)
-    });
-    if(!res.ok){ throw new Error('bad response'); }
-    const bucketId = (await res.text()).trim();
-    document.getElementById('bucketIdDisplay').textContent = bucketId;
-    document.getElementById('setupStep1').style.display = 'none';
-    document.getElementById('setupStep2').style.display = 'block';
-  } catch(err){
-    errEl.classList.add('show');
-  }
-}
+const FIREBASE_DB_URL = "https://museum-confidential-default-rtdb.asia-southeast1.firebasedatabase.app";
 
 async function kvSet(key, value){
   try{
-    const res = await fetch('https://kvdb.io/' + KVDB_BUCKET_ID + '/' + encodeURIComponent(key), {
-      method: 'POST',
-      body: value
+    const res = await fetch(FIREBASE_DB_URL + '/players/' + encodeURIComponent(key) + '.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
     });
     if(!res.ok){
       const text = await res.text().catch(()=>'');
@@ -476,16 +449,17 @@ async function kvSet(key, value){
 
 async function kvListWithValues(prefix){
   try{
-    const res = await fetch('https://kvdb.io/' + KVDB_BUCKET_ID + '/?prefix=' + encodeURIComponent(prefix) + '&values=true&format=json');
+    const res = await fetch(FIREBASE_DB_URL + '/players.json');
     if(!res.ok) return [];
     const data = await res.json();
-    return data || [];
+    if(!data) return [];
+    return Object.entries(data).filter(([k]) => k.startsWith(prefix));
   } catch(err){ console.error('kvList failed', err); return []; }
 }
 
 async function kvDelete(key){
   try{
-    await fetch('https://kvdb.io/' + KVDB_BUCKET_ID + '/' + encodeURIComponent(key), { method: 'DELETE' });
+    await fetch(FIREBASE_DB_URL + '/players/' + encodeURIComponent(key) + '.json', { method: 'DELETE' });
   } catch(err){ console.error('kvDelete failed', err); }
 }
 
