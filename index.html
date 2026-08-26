@@ -254,16 +254,12 @@
   <div id="timerBadge" class="timer-badge" style="display:none;"></div>
 
   <div id="screen-title" class="screen active corner">
-    <a href="#" id="lbLink" class="top-link">Leaderboard →</a>
     <div class="tag">
       <div class="punch"></div>
       <p class="eyebrow">LKCNHM · staff meeting</p>
       <h1 class="title">Museum<br>Confidential</h1>
       <p class="sub">Case File No. 26 — a staff investigation in two parts. Reach in, guess, and see what you really know about this place.</p>
       <button class="btn amber" onclick="goTo('nickname')">Open the case file</button>
-      <div style="display:flex; justify-content:center; gap:16px; margin-top:14px;">
-        <a href="#" id="setupLink" class="top-link" style="position:static; color: var(--ink-soft);">Storage setup (admin) →</a>
-      </div>
       <div id="titleQrWrap" style="margin-top:22px; padding-top:18px; border-top:1px dashed var(--ink-soft); text-align:center;">
         <p class="sub" style="margin-bottom:10px;">Paste your published link to generate a QR code for phones</p>
         <input type="text" id="qrLinkInput" placeholder="https://yoursite.tiiny.site" style="font-size:13px; margin-bottom:10px;">
@@ -283,6 +279,8 @@
       <p class="sub">This creates a free, private storage bucket for the live leaderboard. Do this once, then tell Claude the Bucket ID it gives you so it can be built into the final file — nobody else needs to touch this screen.</p>
       <p class="sub">Shared storage is connected to Firebase. Nothing to do here unless you're changing the backend.</p>
       <div style="font-family:'Special Elite', monospace; font-size:13px; background: rgba(255,255,255,0.5); border:1px dashed var(--ink-soft); padding:12px; text-align:center; word-break:break-all;">https://museum-confidential-default-rtdb.asia-southeast1.firebasedatabase.app</div>
+      <div style="height:20px;"></div>
+      <button class="btn ghost" onclick="clearLeaderboard()">Clear leaderboard</button>
       <div style="height:16px;"></div>
       <button class="btn ghost" onclick="goTo('title')">Back</button>
     </div>
@@ -365,9 +363,6 @@
     <h2 class="lb-title">Top Investigators</h2>
     <p class="lb-sub">Ranked by score, then by time</p>
     <div class="lb-list" id="lbList"><div class="lb-empty">Waiting for the first case to close…</div></div>
-    <div style="text-align:center; margin-top:26px;">
-      <button class="btn ghost" style="width:auto; padding:8px 16px; font-size:12px; color: rgba(243,233,210,0.7); border-color: rgba(243,233,210,0.3);" onclick="clearLeaderboard()">Clear leaderboard (test run)</button>
-    </div>
   </div>
 
 </div>
@@ -424,9 +419,7 @@ function goTo(name){
   }
 }
 
-document.getElementById('lbLink').addEventListener('click', function(e){ e.preventDefault(); goTo('leaderboard'); });
 document.getElementById('lbBack').addEventListener('click', function(e){ e.preventDefault(); goTo('title'); });
-document.getElementById('setupLink').addEventListener('click', function(e){ e.preventDefault(); goTo('setup'); });
 
 const FIREBASE_DB_URL = "https://museum-confidential-default-rtdb.asia-southeast1.firebasedatabase.app";
 
@@ -726,6 +719,8 @@ async function clearLeaderboard(){
 
 if(window.location.hash === '#leaderboard' || window.location.hash === '#board'){
   goTo('leaderboard');
+} else if(window.location.hash === '#admin'){
+  goTo('setup');
 }
 </script>
 </body>
