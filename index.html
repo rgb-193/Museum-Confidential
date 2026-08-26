@@ -363,6 +363,7 @@
         <div class="stat"><div class="num" id="resTime">0:00</div><div class="lbl">Time</div></div>
       </div>
       <p class="sub" style="margin-top:16px;">Your score has been logged. Check the projector to see where you land.</p>
+      <p id="saveStatus" style="font-family:'Special Elite', monospace; font-size:12px; color: var(--ink-soft); margin: -8px 0 16px;"></p>
       <button class="btn amber" onclick="goTo('leaderboard')">View leaderboard</button>
     </div>
   </div>
@@ -383,15 +384,15 @@
 
 <script>
 const quizData = [
-  { q: "While a museum visitor was busy taking a photo at the main lobby, her small kid was busy licking the entrance glass door.", opts: ["True","Partially True","False"], correct: 0, note: "Witnessed by Zaini and Faffyza in person." },
+  { q: "While a museum visitor was busy taking a photo at the main lobby, her small kid was busy licking the entrance glass door.", opts: ["True","Partially True","False"], correct: 0, note: "Witness by Zaini and Faffyza in person." },
   { q: "Where is the secondary fire evacuation point?", opts: ["UCC Drop Off Point","Alice Lee Plaza","YSTCM Carpark","Raffles Hall Carpark"], correct: 1 },
   { q: "A streak of chocolate smudge was found on a showcase display in the Heritage Gallery near the toilet.", opts: ["True","Partially True","False"], correct: 0, note: "Till today, nobody knows if it's really chocolate." },
-  { q: "Who is the Fire Warden for level 1M?", opts: ["Alex","Siong Kiat","Kelvin","Jonathan"], correct: 3 },
-  { q: "A visitor once threw up inside the elephant skull.", opts: ["True","Partially True","False"], correct: 1, note: "Ask around after the game — there's a story behind this one." },
-  { q: "During one CNY period a few years ago, a visitor sat and ate his mandarin oranges in the temp gallery, then threw the peels on the floor and left.", opts: ["True","Partially True","False"], correct: 0 },
-  { q: "Which of these live animals has not visited the museum?", opts: ["Peacock","Hornbill","Civet Cat","Otter"], correct: 3 },
+  { q: "Who is the main Fire Warden for level 1M?", opts: ["Alex","Siong Kiat","Kelvin","Jonathan"], correct: 1 },
+  { q: "A visitor once threw up inside the elephant skull.", opts: ["True","Partially True","False"], correct: 2, note: "While no visitor has ever vomited inside the elephant skull, people have thrown trash into it." },
+  { q: "During one CNY period a few years ago, a visitor sat and ate his mandarin oranges in the temp gallery, then threw the peels on the floor and left.", opts: ["True","Partially True","False"], correct: 0, note: "The orange peels were literally all over the floor!" },
+  { q: "Which of these live animals has no official record of visiting the museum — unless they sneak in after dark?", opts: ["Peacock","Hornbill","Civet Cat","Otter"], correct: 3 },
   { q: "During the Body Snatchers exhibition, how many times did the ant sculpture break?", opts: ["17","33","8","Lost count"], correct: 3 },
-  { q: "A visitor once flying-kicked the Break Glass door release, exited the museum, then went back into the lobby and drank his coffee.", opts: ["True","Partially True","False"], correct: 1, note: "Ask around after the game — there's a story behind this one too." }
+  { q: "A visitor once flying-kicked the Break Glass door release, exited the museum, then went back into the lobby and drank his coffee.", opts: ["True","Partially True","False"], correct: 1, note: "This did happen, just that there were no flying kicks or coffee." }
 ];
 
 const crossData = [
@@ -463,8 +464,14 @@ async function kvSet(key, value){
       method: 'POST',
       body: value
     });
-    return res.ok;
-  } catch(err){ console.error('kvSet failed', err); return false; }
+    if(!res.ok){
+      const text = await res.text().catch(()=>'');
+      return { ok:false, status: res.status, detail: text };
+    }
+    return { ok:true };
+  } catch(err){
+    return { ok:false, status: 'network', detail: String(err) };
+  }
 }
 
 async function kvListWithValues(prefix){
@@ -648,7 +655,7 @@ async function submitFinalScore(){
   const secs = Math.floor(totalMs/1000);
   document.getElementById('resTime').textContent = Math.floor(secs/60) + ':' + String(secs%60).padStart(2,'0');
   try{
-    await kvSet('player:' + state.nickname, JSON.stringify({
+    const result = await kvSet('player:' + state.nickname, JSON.stringify({
       nickname: state.nickname,
       score: totalScore,
       quizScore: state.qScore,
@@ -656,8 +663,15 @@ async function submitFinalScore(){
       timeMs: totalMs,
       finishedAt: Date.now()
     }));
+    const statusEl = document.getElementById('saveStatus');
+    if(result.ok){
+      statusEl.textContent = 'Saved to the shared leaderboard.';
+    } else {
+      statusEl.textContent = 'Could not save your score (status: ' + result.status + '). Screenshot this and show Zaini.';
+      statusEl.style.color = 'var(--red)';
+    }
   } catch(err){
-    console.error('Could not save score', err);
+    document.getElementById('saveStatus').textContent = 'Could not save your score — unexpected error.';
   }
   goTo('results');
 }
