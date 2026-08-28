@@ -260,6 +260,36 @@
       <h1 class="title">Museum<br>Confidential</h1>
       <p class="sub">Case File No. 26 — a staff investigation in two parts. Reach in, guess, and see what you really know about this place.</p>
       <button class="btn amber" onclick="goTo('nickname')">Open the case file</button>
+      <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
+        <button class="btn ghost" style="width:auto; padding:8px 14px; font-size:13px;" id="musicToggleBtn" onclick="toggleMusic()">🔈 Music: Off</button>
+        <button class="btn ghost" style="width:auto; padding:8px 14px; font-size:13px;" id="sfxToggleBtn" onclick="toggleSfx()">🔊 Sounds: On</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-setup" class="screen">
+    <div class="tag">
+      <div class="punch"></div>
+      <p class="eyebrow">Admin only</p>
+      <h1 class="title" style="font-size:22px;">Host controls</h1>
+      <p class="sub">Shared storage is connected to Firebase.</p>
+      <div class="stat-row" style="margin-bottom:6px;">
+        <div class="stat"><div class="num" id="activeCount">–</div><div class="lbl">Currently playing</div></div>
+        <div class="stat"><div class="num" id="finishedCount">–</div><div class="lbl">Finished</div></div>
+      </div>
+      <div id="activeNamesList" style="font-size:13px; color: var(--ink-soft); margin-bottom:16px;"></div>
+
+      <div style="border-top:1px dashed var(--ink-soft); padding-top:16px; margin-top:6px;">
+        <p class="sub" style="margin-bottom:8px;">Game timer status: <strong id="gameStatusText">–</strong></p>
+        <div class="footer-row">
+          <button class="btn amber" onclick="startGameTimer()">Start Game (15 min)</button>
+          <button class="btn ghost" onclick="resetGameTimer()">Reset</button>
+        </div>
+      </div>
+
+      <div style="height:20px;"></div>
+      <button class="btn ghost" onclick="clearLeaderboard()">Clear leaderboard</button>
+
       <div id="titleQrWrap" style="margin-top:22px; padding-top:18px; border-top:1px dashed var(--ink-soft); text-align:center;">
         <p class="sub" style="margin-bottom:10px;">Paste your published link to generate a QR code for phones</p>
         <input type="text" id="qrLinkInput" placeholder="https://yoursite.tiiny.site" style="font-size:13px; margin-bottom:10px;">
@@ -268,19 +298,7 @@
         </div>
         <div id="titleQr" style="display:inline-block; background:#fff; padding:8px; border-radius:4px; border:1px solid var(--ink-soft); margin-top:14px;"></div>
       </div>
-    </div>
-  </div>
 
-  <div id="screen-setup" class="screen">
-    <div class="tag">
-      <div class="punch"></div>
-      <p class="eyebrow">Admin only — do this once, before hosting</p>
-      <h1 class="title" style="font-size:22px;">Set up shared storage</h1>
-      <p class="sub">This creates a free, private storage bucket for the live leaderboard. Do this once, then tell Claude the Bucket ID it gives you so it can be built into the final file — nobody else needs to touch this screen.</p>
-      <p class="sub">Shared storage is connected to Firebase. Nothing to do here unless you're changing the backend.</p>
-      <div style="font-family:'Special Elite', monospace; font-size:13px; background: rgba(255,255,255,0.5); border:1px dashed var(--ink-soft); padding:12px; text-align:center; word-break:break-all;">https://museum-confidential-default-rtdb.asia-southeast1.firebasedatabase.app</div>
-      <div style="height:20px;"></div>
-      <button class="btn ghost" onclick="clearLeaderboard()">Clear leaderboard</button>
       <div style="height:16px;"></div>
       <button class="btn ghost" onclick="goTo('title')">Back</button>
     </div>
@@ -295,7 +313,17 @@
       <input type="text" id="nicknameInput" placeholder="Your nickname" maxlength="20" autocomplete="off">
       <p class="err" id="nicknameErr">Enter a nickname first.</p>
       <div style="height:16px;"></div>
-      <button class="btn amber" onclick="submitNickname()">Start Part 1 — Museum Trivia</button>
+      <button class="btn amber" onclick="submitNickname()">Continue</button>
+    </div>
+  </div>
+
+  <div id="screen-waiting" class="screen">
+    <div class="tag">
+      <div class="punch"></div>
+      <p class="eyebrow">Step 2 of 3</p>
+      <h1 class="title" style="font-size:24px;">You're in, <span id="waitName">Investigator</span></h1>
+      <p class="sub">The case opens for everyone at the same time. Sit tight — the host will start it any moment now.</p>
+      <div style="text-align:center; padding: 22px 0; font-family:'Special Elite', monospace; font-size:14px; color: var(--ink-soft);" id="waitingStatus">● Standing by</div>
     </div>
   </div>
 
@@ -345,16 +373,16 @@
   <div id="screen-results" class="screen">
     <div class="tag">
       <div class="punch"></div>
-      <p class="eyebrow">Case closed</p>
-      <h1 class="title" style="font-size:24px;">Nice work, <span id="resName">Investigator</span></h1>
+      <p class="eyebrow" id="resEyebrow">Case closed</p>
+      <h1 class="title" style="font-size:24px;"><span id="resHeadingPrefix">Nice work,</span> <span id="resName">Investigator</span></h1>
       <div class="stat-row">
         <div class="stat"><div class="num" id="resTrivia">0/9</div><div class="lbl">Trivia</div></div>
         <div class="stat"><div class="num" id="resCross">0/11</div><div class="lbl">Names</div></div>
         <div class="stat"><div class="num" id="resTime">0:00</div><div class="lbl">Time</div></div>
       </div>
-      <p class="sub" style="margin-top:16px;">Your score has been logged. Check the projector to see where you land.</p>
+      <p class="sub" id="resSub" style="margin-top:16px;">Your score has been logged. Check the projector to see where you land.</p>
       <p id="saveStatus" style="font-family:'Special Elite', monospace; font-size:12px; color: var(--ink-soft); margin: -8px 0 16px;"></p>
-      <button class="btn amber" onclick="goTo('leaderboard')">View leaderboard</button>
+      <button class="btn amber" id="viewLeaderboardBtn" onclick="goTo('leaderboard')">View leaderboard</button>
     </div>
   </div>
 
@@ -403,7 +431,13 @@ let state = {
   qAnswered: false,
   crossScore: 0,
   startTime: null,
-  timerInterval: null
+  gameEndTime: null,
+  timerInterval: null,
+  heartbeatInterval: null,
+  finished: false,
+  timedOut: false,
+  soundOn: true,
+  musicOn: false
 };
 
 function goTo(name){
@@ -414,9 +448,89 @@ function goTo(name){
     document.getElementById('timerBadge').style.display = 'none';
     loadLeaderboard();
     startLBPolling();
+  } else if(name === 'setup'){
+    document.getElementById('timerBadge').style.display = 'none';
+    loadActiveStats();
+    startAdminPolling();
   } else {
     stopLBPolling();
+    stopAdminPolling();
   }
+}
+
+let adminPollTimer = null;
+function startAdminPolling(){
+  stopAdminPolling();
+  adminPollTimer = setInterval(loadActiveStats, 4000);
+}
+function stopAdminPolling(){
+  if(adminPollTimer){ clearInterval(adminPollTimer); adminPollTimer = null; }
+}
+
+async function loadActiveStats(){
+  const ACTIVE_TIMEOUT_MS = 3 * 60 * 1000; // drop anyone not heard from in 3 min
+  try{
+    const res = await fetch(FIREBASE_DB_URL + '/active.json');
+    const data = res.ok ? await res.json() : null;
+    const now = Date.now();
+    const activeNames = data ? Object.entries(data)
+      .filter(([name, ts]) => (now - ts) < ACTIVE_TIMEOUT_MS)
+      .map(([name]) => name) : [];
+    document.getElementById('activeCount').textContent = activeNames.length;
+    document.getElementById('activeNamesList').textContent = activeNames.length
+      ? activeNames.join(', ')
+      : '';
+  } catch(err){
+    document.getElementById('activeCount').textContent = '–';
+  }
+  try{
+    const rows = await kvListWithValues('player:');
+    document.getElementById('finishedCount').textContent = rows.length;
+  } catch(err){
+    document.getElementById('finishedCount').textContent = '–';
+  }
+  try{
+    const res = await fetch(FIREBASE_DB_URL + '/gameState.json');
+    const gs = res.ok ? await res.json() : null;
+    const statusEl = document.getElementById('gameStatusText');
+    if(!gs || gs.status !== 'running'){
+      statusEl.textContent = 'Not started';
+    } else {
+      const remainingMs = (gs.startTime + (gs.durationMs || 900000)) - Date.now();
+      if(remainingMs <= 0){
+        statusEl.textContent = 'Time is up';
+      } else {
+        const secs = Math.floor(remainingMs/1000);
+        statusEl.textContent = 'Running — ' + Math.floor(secs/60) + ':' + String(secs%60).padStart(2,'0') + ' left';
+      }
+    }
+  } catch(err){
+    document.getElementById('gameStatusText').textContent = '–';
+  }
+}
+
+async function startGameTimer(){
+  try{
+    await fetch(FIREBASE_DB_URL + '/gameState.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'running', startTime: Date.now(), durationMs: 900000 })
+    });
+    loadActiveStats();
+  } catch(err){ alert('Could not start the game timer. Check your connection.'); }
+}
+
+async function resetGameTimer(){
+  const ok = confirm('Reset the game timer? Anyone still playing will be stuck waiting until you start again.');
+  if(!ok) return;
+  try{
+    await fetch(FIREBASE_DB_URL + '/gameState.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'waiting', startTime: null, durationMs: 900000 })
+    });
+    loadActiveStats();
+  } catch(err){ alert('Could not reset the game timer. Check your connection.'); }
 }
 
 document.getElementById('lbBack').addEventListener('click', function(e){ e.preventDefault(); goTo('title'); });
@@ -465,20 +579,87 @@ function submitNickname(){
   }
   errEl.classList.remove('show');
   state.nickname = val;
-  state.startTime = Date.now();
+  document.getElementById('waitName').textContent = val;
+  goTo('waiting');
+  startWaitPolling();
+}
+
+let waitPollTimer = null;
+function startWaitPolling(){
+  stopWaitPolling();
+  checkGameState();
+  waitPollTimer = setInterval(checkGameState, 2000);
+}
+function stopWaitPolling(){
+  if(waitPollTimer){ clearInterval(waitPollTimer); waitPollTimer = null; }
+}
+
+async function checkGameState(){
+  try{
+    const res = await fetch(FIREBASE_DB_URL + '/gameState.json');
+    const data = res.ok ? await res.json() : null;
+    if(data && data.status === 'running' && data.startTime){
+      stopWaitPolling();
+      beginPlayingPhase(data.startTime, data.durationMs || 900000);
+    }
+  } catch(err){ console.error('checkGameState failed', err); }
+}
+
+function beginPlayingPhase(serverStartTime, durationMs){
+  state.startTime = serverStartTime;
+  state.gameEndTime = serverStartTime + durationMs;
   document.getElementById('timerBadge').style.display = 'block';
   state.timerInterval = setInterval(updateTimerBadge, 1000);
   updateTimerBadge();
+  markActive();
+  state.heartbeatInterval = setInterval(markActive, 20000);
   renderQuizQuestion();
   goTo('quiz');
 }
 
+function handleTimeUp(){
+  if(state.finished || state.timedOut) return;
+  state.timedOut = true;
+  clearInterval(state.timerInterval);
+  clearInterval(state.heartbeatInterval);
+  const activeScreen = document.querySelector('.screen.active');
+  if(activeScreen && activeScreen.id === 'screen-crossword'){
+    scoreCrossword();
+  }
+  playSound('timeup');
+  alert("⏰ Time's up! Whatever you had is what gets logged.");
+  submitFinalScore(true);
+}
+
+async function markActive(){
+  try{
+    await fetch(FIREBASE_DB_URL + '/active/' + encodeURIComponent(state.nickname) + '.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Date.now())
+    });
+  } catch(err){ console.error('markActive failed', err); }
+}
+
+async function clearActive(){
+  if(!state.nickname) return;
+  try{
+    await fetch(FIREBASE_DB_URL + '/active/' + encodeURIComponent(state.nickname) + '.json', { method: 'DELETE' });
+  } catch(err){ console.error('clearActive failed', err); }
+}
+
 function updateTimerBadge(){
   const el = document.getElementById('timerBadge');
-  if(!state.startTime){ return; }
-  const secs = Math.floor((Date.now() - state.startTime)/1000);
+  if(!state.gameEndTime){ return; }
+  const remainingMs = state.gameEndTime - Date.now();
+  if(remainingMs <= 0){
+    el.textContent = "Time's up";
+    handleTimeUp();
+    return;
+  }
+  const secs = Math.floor(remainingMs/1000);
   const m = Math.floor(secs/60), s = secs%60;
-  el.textContent = 'On the case — ' + m + ':' + String(s).padStart(2,'0');
+  el.textContent = 'Time left — ' + m + ':' + String(s).padStart(2,'0');
 }
 
 document.getElementById('nicknameInput').addEventListener('input', function(){
@@ -518,6 +699,7 @@ function renderQuizQuestion(){
 function selectQuizOption(i){
   if(state.qAnswered) return;
   state.selectedOption = i;
+  playSound('click');
   document.querySelectorAll('#quizOptions .opt').forEach(el => el.classList.remove('selected'));
   document.querySelector('#quizOptions .opt[data-index="'+i+'"]').classList.add('selected');
   document.getElementById('quizConfirmBtn').disabled = false;
@@ -537,6 +719,9 @@ function confirmQuizAnswer(){
   if(state.selectedOption === item.correct){
     state.qScore += 1;
     document.getElementById('quizScoreLabel').textContent = 'Score: ' + state.qScore;
+    playSound('correct');
+  } else {
+    playSound('wrong');
   }
   if(item.note){
     const noteEl = document.getElementById('quizNote');
@@ -571,7 +756,7 @@ function renderCrossword(){
       if(ch === ' '){
         boxesHtml += '<div style="width:10px;"></div>';
       } else {
-        boxesHtml += '<input class="box" maxlength="1" data-clue="'+idx+'" data-pos="'+boxIdx+'" oninput="onBoxInput(this)">';
+        boxesHtml += '<input class="box" maxlength="1" data-clue="'+idx+'" data-pos="'+boxIdx+'" oninput="onBoxInput(this)" onkeydown="onBoxKeyDown(event, this)">';
         boxIdx++;
       }
     });
@@ -592,10 +777,23 @@ function onBoxInput(el){
   }
 }
 
-function finishCrossword(){
+function onBoxKeyDown(e, el){
+  if(e.key === 'Backspace' && !el.value){
+    const all = Array.from(document.querySelectorAll('.box[data-clue="'+el.dataset.clue+'"]'));
+    const i = all.indexOf(el);
+    if(i > 0){
+      e.preventDefault();
+      all[i-1].value = '';
+      all[i-1].focus();
+    }
+  }
+}
+
+function scoreCrossword(){
   let solved = 0;
   crossData.forEach((item, idx) => {
     const boxes = Array.from(document.querySelectorAll('.box[data-clue="'+idx+'"]'));
+    if(boxes.length === 0) return;
     const guess = boxes.map(b => b.value || '').join('');
     const target = item.answer.replace(/\s/g,'');
     const isCorrect = guess === target;
@@ -607,12 +805,21 @@ function finishCrossword(){
     if(isCorrect) solved++;
   });
   state.crossScore = solved;
-  document.getElementById('crossFinishBtn').style.display = 'none';
-  submitFinalScore();
 }
 
-async function submitFinalScore(){
+function finishCrossword(){
+  scoreCrossword();
+  playSound('submit');
+  document.getElementById('crossFinishBtn').style.display = 'none';
+  submitFinalScore(false);
+}
+
+async function submitFinalScore(isTimeout){
+  if(state.finished) return;
+  state.finished = true;
   clearInterval(state.timerInterval);
+  clearInterval(state.heartbeatInterval);
+  clearActive();
   document.getElementById('timerBadge').style.display = 'none';
   const totalMs = Date.now() - state.startTime;
   const totalScore = state.qScore + state.crossScore;
@@ -621,6 +828,17 @@ async function submitFinalScore(){
   document.getElementById('resCross').textContent = state.crossScore + '/11';
   const secs = Math.floor(totalMs/1000);
   document.getElementById('resTime').textContent = Math.floor(secs/60) + ':' + String(secs%60).padStart(2,'0');
+  if(isTimeout){
+    document.getElementById('resEyebrow').textContent = 'Case closed by the clock';
+    document.getElementById('resHeadingPrefix').textContent = "Time's up,";
+    document.getElementById('resSub').textContent = "15 minutes is up — whatever you had is what's logged.";
+    document.getElementById('viewLeaderboardBtn').textContent = 'Next → Leaderboard';
+  } else {
+    document.getElementById('resEyebrow').textContent = 'Case closed';
+    document.getElementById('resHeadingPrefix').textContent = 'Nice work,';
+    document.getElementById('resSub').textContent = 'Your score has been logged. Check the projector to see where you land.';
+    document.getElementById('viewLeaderboardBtn').textContent = 'View leaderboard';
+  }
   try{
     const result = await kvSet('player:' + state.nickname, JSON.stringify({
       nickname: state.nickname,
@@ -721,6 +939,91 @@ if(window.location.hash === '#leaderboard' || window.location.hash === '#board')
   goTo('leaderboard');
 } else if(window.location.hash === '#admin'){
   goTo('setup');
+}
+
+// --- Sound effects & ambient music ---
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return null; }
+  }
+  if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
+  return audioCtx;
+}
+
+function playTone(freq, duration, type, gainVal){
+  if(!state.soundOn) return;
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  const now = ctx.currentTime;
+  gain.gain.setValueAtTime(gainVal || 0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + duration);
+}
+
+function playSound(name){
+  if(!state.soundOn) return;
+  if(name === 'correct'){ playTone(660,0.12,'sine',0.18); setTimeout(()=>playTone(880,0.16,'sine',0.16),90); }
+  else if(name === 'wrong'){ playTone(160,0.25,'sawtooth',0.15); }
+  else if(name === 'click'){ playTone(440,0.05,'square',0.06); }
+  else if(name === 'submit'){ playTone(520,0.1,'triangle',0.12); setTimeout(()=>playTone(660,0.15,'triangle',0.12),80); }
+  else if(name === 'timeup'){ playTone(220,0.3,'square',0.2); setTimeout(()=>playTone(180,0.4,'square',0.2),250); }
+}
+
+function toggleSfx(){
+  state.soundOn = !state.soundOn;
+  document.getElementById('sfxToggleBtn').textContent = state.soundOn ? '🔊 Sounds: On' : '🔇 Sounds: Off';
+  if(state.soundOn){ ensureAudio(); playSound('click'); }
+}
+
+let musicNodes = null;
+function toggleMusic(){
+  state.musicOn = !state.musicOn;
+  const btn = document.getElementById('musicToggleBtn');
+  if(state.musicOn){
+    startMusic();
+    btn.textContent = '🔊 Music: On';
+  } else {
+    stopMusic();
+    btn.textContent = '🔈 Music: Off';
+  }
+}
+
+function startMusic(){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  stopMusic();
+  const master = ctx.createGain();
+  master.gain.value = 0.05;
+  master.connect(ctx.destination);
+  const osc1 = ctx.createOscillator();
+  osc1.type = 'sine'; osc1.frequency.value = 110;
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'sine'; osc2.frequency.value = 110 * 1.5;
+  osc1.connect(master); osc2.connect(master);
+  osc1.start(); osc2.start();
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 0.07;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.025;
+  lfo.connect(lfoGain).connect(master.gain);
+  lfo.start();
+  musicNodes = { master, osc1, osc2, lfo };
+}
+
+function stopMusic(){
+  if(musicNodes){
+    try{
+      musicNodes.osc1.stop(); musicNodes.osc2.stop(); musicNodes.lfo.stop();
+    } catch(e){}
+    musicNodes = null;
+  }
 }
 </script>
 </body>
