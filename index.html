@@ -414,7 +414,7 @@
     <p class="lb-sub">Ranked by score, then by time</p>
     <div class="lb-list" id="lbList"><div class="lb-empty">Waiting for the first case to close…</div></div>
 
-    <div id="projQrWrap" style="margin-top:34px; text-align:center;">
+    <div id="projQrWrap" style="margin-top:34px; text-align:center; display:none;">
       <p style="color: rgba(243,233,210,0.6); font-size:13px; margin-bottom:10px;">Scan to join the case</p>
       <input type="text" id="qrLinkInput" placeholder="Paste your published link here" style="font-size:13px; margin-bottom:10px; color: var(--paper); border-bottom-color: rgba(243,233,210,0.4);">
       <div>
@@ -1000,6 +1000,7 @@ async function clearLeaderboard(){
 
 if(window.location.hash === '#leaderboard' || window.location.hash === '#board'){
   goTo('leaderboard');
+  document.getElementById('projQrWrap').style.display = 'block';
 } else if(window.location.hash === '#admin'){
   goTo('setup');
 }
