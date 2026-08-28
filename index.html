@@ -51,9 +51,35 @@
     background-size: 100% 28px;
     border: 1px solid var(--ink);
     border-radius: 4px;
-    box-shadow: 4px 4px 0 rgba(0,0,0,0.35);
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.05);
     padding: 34px 28px 28px;
     position:relative;
+    transform: rotate(-0.35deg);
+  }
+  .tag::after{
+    content:"";
+    position:absolute;
+    top:-10px; right:22px;
+    width:46px; height:20px;
+    background: rgba(198,138,56,0.55);
+    border: 1px solid rgba(143,95,30,0.4);
+    transform: rotate(4deg);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .stamp{
+    position:absolute;
+    top: 28px; right: 22px;
+    font-family:'Special Elite', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--red);
+    border: 2.5px solid var(--red);
+    border-radius: 4px;
+    padding: 4px 9px;
+    transform: rotate(8deg);
+    opacity: 0.75;
+    text-transform: uppercase;
+    pointer-events: none;
   }
   .tag::before{
     content:"";
@@ -234,6 +260,12 @@
     font-family:'Special Elite', monospace; font-size:18px; width:26px; text-align:center;
     color: var(--amber-dark);
   }
+  .lb-row-first{
+    border-width: 2px;
+    box-shadow: 4px 4px 0 rgba(198,138,56,0.5);
+    background: linear-gradient(90deg, var(--paper) 0%, #F7EDD4 100%);
+  }
+  .lb-row-first .lb-rank{ font-size: 24px; }
   .lb-name{ flex:1; font-weight:600; font-size:15px; }
   .lb-score{ font-family:'Special Elite', monospace; font-size:14px; color: var(--forest-dark); }
   .lb-time{ font-size:11px; color: var(--ink-soft); }
@@ -259,11 +291,8 @@
       <p class="eyebrow">LKCNHM · staff meeting</p>
       <h1 class="title">Museum<br>Confidential</h1>
       <p class="sub">Case File No. 26 — a staff investigation in two parts. Reach in, guess, and see what you really know about this place.</p>
-      <button class="btn amber" onclick="goTo('nickname')">Open the case file</button>
-      <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
-        <button class="btn ghost" style="width:auto; padding:8px 14px; font-size:13px;" id="musicToggleBtn" onclick="toggleMusic()">🔈 Music: Off</button>
-        <button class="btn ghost" style="width:auto; padding:8px 14px; font-size:13px;" id="sfxToggleBtn" onclick="toggleSfx()">🔊 Sounds: On</button>
-      </div>
+      <span class="stamp">Classified</span>
+      <button class="btn amber" onclick="goTo('nickname')">🔍 Open the case file</button>
     </div>
   </div>
 
@@ -282,22 +311,15 @@
       <div style="border-top:1px dashed var(--ink-soft); padding-top:16px; margin-top:6px;">
         <p class="sub" style="margin-bottom:8px;">Game timer status: <strong id="gameStatusText">–</strong></p>
         <div class="footer-row">
-          <button class="btn amber" onclick="startGameTimer()">Start Game (15 min)</button>
+          <button class="btn amber" onclick="startGameTimer()">Start Game (10 min)</button>
           <button class="btn ghost" onclick="resetGameTimer()">Reset</button>
         </div>
+        <div style="height:10px;"></div>
+        <button class="btn ghost" style="border-color: var(--red); color: var(--red);" onclick="forceStopGame()">⏹ Stop game now</button>
       </div>
 
       <div style="height:20px;"></div>
       <button class="btn ghost" onclick="clearLeaderboard()">Clear leaderboard</button>
-
-      <div id="titleQrWrap" style="margin-top:22px; padding-top:18px; border-top:1px dashed var(--ink-soft); text-align:center;">
-        <p class="sub" style="margin-bottom:10px;">Paste your published link to generate a QR code for phones</p>
-        <input type="text" id="qrLinkInput" placeholder="https://yoursite.tiiny.site" style="font-size:13px; margin-bottom:10px;">
-        <div>
-          <button class="btn ghost" style="width:auto; padding:8px 16px; font-size:13px;" onclick="generateTitleQr()">Generate QR code</button>
-        </div>
-        <div id="titleQr" style="display:inline-block; background:#fff; padding:8px; border-radius:4px; border:1px solid var(--ink-soft); margin-top:14px;"></div>
-      </div>
 
       <div style="height:16px;"></div>
       <button class="btn ghost" onclick="goTo('title')">Back</button>
@@ -391,6 +413,15 @@
     <h2 class="lb-title">Top Investigators</h2>
     <p class="lb-sub">Ranked by score, then by time</p>
     <div class="lb-list" id="lbList"><div class="lb-empty">Waiting for the first case to close…</div></div>
+
+    <div id="projQrWrap" style="margin-top:34px; text-align:center;">
+      <p style="color: rgba(243,233,210,0.6); font-size:13px; margin-bottom:10px;">Scan to join the case</p>
+      <input type="text" id="qrLinkInput" placeholder="Paste your published link here" style="font-size:13px; margin-bottom:10px; color: var(--paper); border-bottom-color: rgba(243,233,210,0.4);">
+      <div>
+        <button class="btn amber" style="width:auto; padding:8px 18px; font-size:13px;" onclick="generateTitleQr()">Generate QR code</button>
+      </div>
+      <div id="titleQr" style="display:inline-block; background:#fff; padding:10px; border-radius:6px; margin-top:16px;"></div>
+    </div>
   </div>
 
 </div>
@@ -493,10 +524,12 @@ async function loadActiveStats(){
     const res = await fetch(FIREBASE_DB_URL + '/gameState.json');
     const gs = res.ok ? await res.json() : null;
     const statusEl = document.getElementById('gameStatusText');
-    if(!gs || gs.status !== 'running'){
+    if(gs && gs.status === 'stopped'){
+      statusEl.textContent = 'Stopped by host';
+    } else if(!gs || gs.status !== 'running'){
       statusEl.textContent = 'Not started';
     } else {
-      const remainingMs = (gs.startTime + (gs.durationMs || 900000)) - Date.now();
+      const remainingMs = (gs.startTime + (gs.durationMs || 600000)) - Date.now();
       if(remainingMs <= 0){
         statusEl.textContent = 'Time is up';
       } else {
@@ -514,7 +547,7 @@ async function startGameTimer(){
     await fetch(FIREBASE_DB_URL + '/gameState.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'running', startTime: Date.now(), durationMs: 900000 })
+      body: JSON.stringify({ status: 'running', startTime: Date.now(), durationMs: 600000 })
     });
     loadActiveStats();
   } catch(err){ alert('Could not start the game timer. Check your connection.'); }
@@ -527,10 +560,23 @@ async function resetGameTimer(){
     await fetch(FIREBASE_DB_URL + '/gameState.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'waiting', startTime: null, durationMs: 900000 })
+      body: JSON.stringify({ status: 'waiting', startTime: null, durationMs: 600000 })
     });
     loadActiveStats();
   } catch(err){ alert('Could not reset the game timer. Check your connection.'); }
+}
+
+async function forceStopGame(){
+  const ok = confirm("Stop the game for everyone right now? Whatever players have completed so far will be locked in and saved.");
+  if(!ok) return;
+  try{
+    await fetch(FIREBASE_DB_URL + '/gameState.json', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'stopped' })
+    });
+    loadActiveStats();
+  } catch(err){ alert('Could not stop the game. Check your connection.'); }
 }
 
 document.getElementById('lbBack').addEventListener('click', function(e){ e.preventDefault(); goTo('title'); });
@@ -600,7 +646,7 @@ async function checkGameState(){
     const data = res.ok ? await res.json() : null;
     if(data && data.status === 'running' && data.startTime){
       stopWaitPolling();
-      beginPlayingPhase(data.startTime, data.durationMs || 900000);
+      beginPlayingPhase(data.startTime, data.durationMs || 600000);
     }
   } catch(err){ console.error('checkGameState failed', err); }
 }
@@ -613,8 +659,20 @@ function beginPlayingPhase(serverStartTime, durationMs){
   updateTimerBadge();
   markActive();
   state.heartbeatInterval = setInterval(markActive, 20000);
+  state.stopCheckInterval = setInterval(checkForceStop, 5000);
   renderQuizQuestion();
   goTo('quiz');
+}
+
+async function checkForceStop(){
+  if(state.finished || state.timedOut) return;
+  try{
+    const res = await fetch(FIREBASE_DB_URL + '/gameState.json');
+    const data = res.ok ? await res.json() : null;
+    if(data && data.status === 'stopped'){
+      handleTimeUp();
+    }
+  } catch(err){ /* ignore, will retry on next poll */ }
 }
 
 function handleTimeUp(){
@@ -622,6 +680,7 @@ function handleTimeUp(){
   state.timedOut = true;
   clearInterval(state.timerInterval);
   clearInterval(state.heartbeatInterval);
+  clearInterval(state.stopCheckInterval);
   const activeScreen = document.querySelector('.screen.active');
   if(activeScreen && activeScreen.id === 'screen-crossword'){
     scoreCrossword();
@@ -819,6 +878,7 @@ async function submitFinalScore(isTimeout){
   state.finished = true;
   clearInterval(state.timerInterval);
   clearInterval(state.heartbeatInterval);
+  clearInterval(state.stopCheckInterval);
   clearActive();
   document.getElementById('timerBadge').style.display = 'none';
   const totalMs = Date.now() - state.startTime;
@@ -894,7 +954,10 @@ async function loadLeaderboard(){
     listEl.innerHTML = top.map((e, i) => {
       const secs = Math.floor(e.timeMs/1000);
       const timeStr = Math.floor(secs/60) + ':' + String(secs%60).padStart(2,'0');
-      return '<div class="lb-row"><div class="lb-rank">#' + (i+1) + '</div>' +
+      const medals = ['🥇','🥈','🥉'];
+      const rankDisplay = medals[i] || ('#' + (i+1));
+      const rowClass = i === 0 ? 'lb-row lb-row-first' : 'lb-row';
+      return '<div class="' + rowClass + '"><div class="lb-rank">' + rankDisplay + '</div>' +
         '<div><div class="lb-name">' + escapeHtml(e.nickname) + '</div><div class="lb-time">' + timeStr + '</div></div>' +
         '<div class="lb-score">' + e.score + '/20</div></div>';
     }).join('');
@@ -977,53 +1040,7 @@ function playSound(name){
 }
 
 function toggleSfx(){
-  state.soundOn = !state.soundOn;
-  document.getElementById('sfxToggleBtn').textContent = state.soundOn ? '🔊 Sounds: On' : '🔇 Sounds: Off';
-  if(state.soundOn){ ensureAudio(); playSound('click'); }
-}
-
-let musicNodes = null;
-function toggleMusic(){
-  state.musicOn = !state.musicOn;
-  const btn = document.getElementById('musicToggleBtn');
-  if(state.musicOn){
-    startMusic();
-    btn.textContent = '🔊 Music: On';
-  } else {
-    stopMusic();
-    btn.textContent = '🔈 Music: Off';
-  }
-}
-
-function startMusic(){
-  const ctx = ensureAudio();
-  if(!ctx) return;
-  stopMusic();
-  const master = ctx.createGain();
-  master.gain.value = 0.05;
-  master.connect(ctx.destination);
-  const osc1 = ctx.createOscillator();
-  osc1.type = 'sine'; osc1.frequency.value = 110;
-  const osc2 = ctx.createOscillator();
-  osc2.type = 'sine'; osc2.frequency.value = 110 * 1.5;
-  osc1.connect(master); osc2.connect(master);
-  osc1.start(); osc2.start();
-  const lfo = ctx.createOscillator();
-  lfo.frequency.value = 0.07;
-  const lfoGain = ctx.createGain();
-  lfoGain.gain.value = 0.025;
-  lfo.connect(lfoGain).connect(master.gain);
-  lfo.start();
-  musicNodes = { master, osc1, osc2, lfo };
-}
-
-function stopMusic(){
-  if(musicNodes){
-    try{
-      musicNodes.osc1.stop(); musicNodes.osc2.stop(); musicNodes.lfo.stop();
-    } catch(e){}
-    musicNodes = null;
-  }
+  // Sound is always on; kept for internal calls, no UI toggle.
 }
 </script>
 </body>
