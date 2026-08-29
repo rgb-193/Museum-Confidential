@@ -311,7 +311,7 @@
       <div style="border-top:1px dashed var(--ink-soft); padding-top:16px; margin-top:6px;">
         <p class="sub" style="margin-bottom:8px;">Game timer status: <strong id="gameStatusText">–</strong></p>
         <div class="footer-row">
-          <button class="btn amber" onclick="startGameTimer()">Start Game (10 min)</button>
+          <button class="btn amber" onclick="startGameTimer()">Start Game (12 min)</button>
           <button class="btn ghost" onclick="resetGameTimer()">Reset</button>
         </div>
         <div style="height:10px;"></div>
@@ -529,7 +529,7 @@ async function loadActiveStats(){
     } else if(!gs || gs.status !== 'running'){
       statusEl.textContent = 'Not started';
     } else {
-      const remainingMs = (gs.startTime + (gs.durationMs || 600000)) - Date.now();
+      const remainingMs = (gs.startTime + (gs.durationMs || 720000)) - Date.now();
       if(remainingMs <= 0){
         statusEl.textContent = 'Time is up';
       } else {
@@ -547,7 +547,7 @@ async function startGameTimer(){
     await fetch(FIREBASE_DB_URL + '/gameState.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'running', startTime: Date.now(), durationMs: 600000 })
+      body: JSON.stringify({ status: 'running', startTime: Date.now(), durationMs: 720000 })
     });
     loadActiveStats();
   } catch(err){ alert('Could not start the game timer. Check your connection.'); }
@@ -560,7 +560,7 @@ async function resetGameTimer(){
     await fetch(FIREBASE_DB_URL + '/gameState.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'waiting', startTime: null, durationMs: 600000 })
+      body: JSON.stringify({ status: 'waiting', startTime: null, durationMs: 720000 })
     });
     loadActiveStats();
   } catch(err){ alert('Could not reset the game timer. Check your connection.'); }
@@ -646,7 +646,7 @@ async function checkGameState(){
     const data = res.ok ? await res.json() : null;
     if(data && data.status === 'running' && data.startTime){
       stopWaitPolling();
-      beginPlayingPhase(data.startTime, data.durationMs || 600000);
+      beginPlayingPhase(data.startTime, data.durationMs || 720000);
     }
   } catch(err){ console.error('checkGameState failed', err); }
 }
